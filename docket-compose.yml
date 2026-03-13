@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  api-gateway:
+    image: nginx:alpine
+    volumes:
+      - ./api_gateway/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+    depends_on:
+      - auth-service
+      - core-service
+
+  auth-service:
+    build: ./auth_service
+    ports:
+      - "8000:8000"
+    depends_on:
+      - rabbitmq
+
+  notification-service:
+    build: ./notification_service
+    depends_on:
+      - rabbitmq
+
+  core-service:
+    build: . # Mevcut Flask uygulamanın bulunduğu dizin
+    ports:
+      - "5000:5000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    depends_on:
+      - rabbitmq
