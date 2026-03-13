@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from mock_db import MOCK_USERS_DB
 
 app = FastAPI(title="Pocket Teacher Auth Service")
-SECRET_KEY = "pocket_teacher_secret"
+SECRET_KEY = "*************"
 
 class LoginData(BaseModel):
     email: str
