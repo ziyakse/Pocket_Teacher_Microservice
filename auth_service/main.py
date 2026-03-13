@@ -28,7 +28,7 @@ def publish_event(event_type: str, data: dict):
 
 @app.post("/api/auth/login")
 def login(user: LoginData):
-    # 1. Kullanıcının gönderdiği email sahte veritabanımızda (mock_db) var mı kontrol et
+    # 1. Kullanıcının gönderdiği email mock veritabanımızda (mock_db) var mı kontrol et
     db_user = MOCK_USERS_DB.get(user.email)
     
     # 2. Kullanıcı varsa ve şifresi eşleşiyorsa token üret
