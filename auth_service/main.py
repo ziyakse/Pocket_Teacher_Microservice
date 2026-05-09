@@ -19,7 +19,7 @@ Instrumentator().instrument(app).expose(app)
 
 
 # GÜVENLİK 1: Gizli anahtarı koda yazmıyoruz, çevresel değişkenden alıyoruz
-SECRET_KEY = os.getenv("SECRET_KEY", "fallback_gizli_anahtar_degistirilecek")
+SECRET_KEY = os.getenv("SECRET_KEY", "IAUSD")
 
 # GÜVENLİK 2: Şifreleri çözmek için Bcrypt ayarı
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
