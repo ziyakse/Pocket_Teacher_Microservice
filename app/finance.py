@@ -5,7 +5,7 @@ import os
 
 app = Flask(__name__)
 # Flash mesajları (bildirimler) için gizli bir anahtar şarttır
-app.secret_key = "pocket_teacher_gizli_anahtar" 
+app.secret_key = "IAUSD" 
 
 # HTML içindeki url_for('student.login') yapılarının çalışması için Blueprint tanımlıyoruz
 student = Blueprint('student', __name__)
