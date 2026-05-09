@@ -12,7 +12,7 @@ services:
       - DB_NAME=auth
       - DB_USER=postgres
       - DB_PASSWORD=postgres
-      - SECRET_KEY=buraya_gizli_anahtar_gelecek # Gerçek anahtarını buraya yazabilirsin
+      - SECRET_KEY=IAUSD
     volumes:
       - auth-service-data:/var/lib/postgresql/data
     depends_on:
