@@ -4,12 +4,25 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import pika, json, jwt
 from datetime import datetime, timedelta
+import os
+from passlib.context import CryptContext
+from prometheus_fastapi_instrumentator import Instrumentator
 
 # Veritabanını diğer dosyadan içeri aktarıyoruz
 from mock_db import MOCK_USERS_DB
 
 app = FastAPI(title="Pocket Teacher Auth Service")
-SECRET_KEY = "*************"
+
+
+
+Instrumentator().instrument(app).expose(app)
+
+
+# GÜVENLİK 1: Gizli anahtarı koda yazmıyoruz, çevresel değişkenden alıyoruz
+SECRET_KEY = os.getenv("SECRET_KEY", "fallback_gizli_anahtar_degistirilecek")
+
+# GÜVENLİK 2: Şifreleri çözmek için Bcrypt ayarı
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class LoginData(BaseModel):
     email: str
@@ -26,13 +39,20 @@ def publish_event(event_type: str, data: dict):
     except Exception as e:
         print("RabbitMQ Hatası:", e)
 
+# --- İZLENEBİLİRLİK (HAFTA 4) ---
+@app.get("/health")
+def read_health():
+    """Kubernetes veya API Gateway'in servisin ayakta olup olmadığını anlaması için Health Check"""
+    return {"status": "ok", "service": "auth-service"}
+# --------------------------------
+
 @app.post("/api/auth/login")
 def login(user: LoginData):
     # 1. Kullanıcının gönderdiği email mock veritabanımızda (mock_db) var mı kontrol et
     db_user = MOCK_USERS_DB.get(user.email)
     
-    # 2. Kullanıcı varsa ve şifresi eşleşiyorsa token üret
-    if db_user and db_user["password"] == user.password:
+    # 2. Kullanıcı varsa ve şifresi EŞLEŞİYORSA (Bcrypt ile hash doğrulaması yapıyoruz)
+    if db_user and pwd_context.verify(user.password, db_user["password"]):
         
         token = jwt.encode(
             {
@@ -51,3 +71,8 @@ def login(user: LoginData):
     
     # E-posta yoksa veya şifre yanlışsa hata dön
     raise HTTPException(status_code=401, detail="Geçersiz kimlik bilgileri")
+
+# --- PROMETHEUS METRİKLERİ ---
+@app.on_event("startup")
+async def startup():
+    Instrumentator().instrument(app).expose(app)

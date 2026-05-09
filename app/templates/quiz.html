@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #fff8e1; }
+        .container { max-width: 480px; background: white; min-height: 100vh; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        .quiz-header {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            padding: 40px 20px; color: white; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px;
+        }
+        .question-card {
+            border: 1px solid #eee; border-radius: 15px; padding: 20px; margin-bottom: 20px;
+        }
+        .form-check-label { cursor: pointer; width: 100%; padding: 5px; }
+        .form-check-input:checked + label { color: #6f42c1; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container p-0">
+    
+    <div class="quiz-header mb-4">
+        <a href="{{ url_for('student.course_detail', course_id=module.course_id) if module else '#' }}" class="text-white text-decoration-none fw-bold">← Çıkış</a>
+        <h2 class="fw-bold mt-2">{{ module.module_name if module else 'Quiz' }}</h2>
+        <p class="mb-0 opacity-75">Quiz Zamanı! Başarılar.</p>
+    </div>
+
+    <form method="POST" class="px-4 pb-5">
+        {% for q in questions %}
+        <div class="question-card">
+            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold text-primary mb-0">SORU {{ loop.index }}</h6>
+                
+                {% if q.difficulty_score == 1 %}
+                    <span class="badge bg-success">Seviye 1 (Kolay)</span>
+                {% elif q.difficulty_score == 2 %}
+                    <span class="badge bg-info text-dark">Seviye 2 (Orta)</span>
+                {% elif q.difficulty_score >= 3 %}
+                    <span class="badge bg-danger">Seviye {{ q.difficulty_score }} (Zor)</span>
+                {% else %}
+                    <span class="badge bg-secondary">Standart</span>
+                {% endif %}
+            </div>
+
+            <p class="fw-bold">{{ q.question_text }}</p>
+            
+            {% if q.options %}
+                {% set list_options = q.options | replace('[', '') | replace(']', '') | replace('"', '') | replace("'", "") %}
+                {% set clean_options = list_options.split(',') %}
+                
+                {% for opt in clean_options %}
+                    {% set clean_opt = opt.strip() %} 
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="question_{{ q.question_id }}" value="{{ clean_opt }}" id="q{{ q.question_id }}_{{ loop.index }}" required>
+                        <label class="form-check-label" for="q{{ q.question_id }}_{{ loop.index }}">
+                            {{ clean_opt }}
+                        </label>
+                    </div>
+                {% endfor %}
+
+            {% else %}
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="question_{{ q.question_id }}" value="{{ q.question_answer }}" id="q{{ q.question_id }}_correct">
+                    <label class="form-check-label" for="q{{ q.question_id }}_correct">
+                        {{ q.question_answer }} (Doğru)
+                    </label>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="question_{{ q.question_id }}" value="Yanlış Cevap" id="q{{ q.question_id }}_wrong">
+                    <label class="form-check-label" for="q{{ q.question_id }}_wrong">
+                        Bilinmiyor
+                    </label>
+                </div>
+            {% endif %}
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm">
+            CEVAPLARI GÖNDER 🚀
+        </button>
+    </form>
+</div>
+
+</body>
+</html>

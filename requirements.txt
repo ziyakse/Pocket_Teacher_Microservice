@@ -1,0 +1,5 @@
+flask
+pika
+tenacity
+google-generativeai
+flask-sqlalchemy

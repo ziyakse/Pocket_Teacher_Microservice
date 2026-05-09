@@ -3,3 +3,5 @@ uvicorn
 pydantic
 PyJWT
 pika
+prometheus-fastapi-instrumentator
+passlib[bcrypt]

@@ -1,0 +1,98 @@
+version: '3'
+
+services:
+  # 1. Kimlik Doğrulama Servisi (FastAPI)
+  auth-service:
+    build:
+      context: ./auth_service
+      dockerfile: Dockerfile
+    environment:
+      - TEST_MODE=1
+      - DB_HOST=db
+      - DB_NAME=auth
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - SECRET_KEY=buraya_gizli_anahtar_gelecek # Gerçek anahtarını buraya yazabilirsin
+    volumes:
+      - auth-service-data:/var/lib/postgresql/data
+    depends_on:
+      - db
+      - rabbitmq
+
+  # 2. Ana Uygulama ve AI Servisi (Flask) - BURAYA EKLEDİK
+  core-service:
+    build:
+      context: .  # Ana dizindeki Dockerfile'ı kullanır
+      dockerfile: Dockerfile
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - GEMINI_API_KEY="AIzaSyAwYGP5BtarSKxzGKoxOPp9nrrfdMR4EcM"
+    depends_on:
+      - rabbitmq
+    ports:
+      - "5000:5000"
+
+  # 2. Veritabanı
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=auth
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+  # 3. Mesaj Kuyruğu (BURAYA EKLEDİK)
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"   # RabbitMQ iletişim portu
+      - "15672:15672" # Yönetim arayüzü portu (Tarayıcıdan bakmak için)
+
+  # 4. Bildirim Servisi
+  notification-service:
+    build:
+      context: ./notification_service
+      dockerfile: Dockerfile
+    environment:
+      - TEST_MODE=1
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+    depends_on:
+      - rabbitmq
+
+  # 5. API Gateway (Giriş Kapısı)
+  api-gateway:
+    build:
+      context: ./api_gateway
+      dockerfile: Dockerfile
+    environment:
+      - PRODUCTION_MODE=1
+      - API_AUTH_SERVICE_URL=http://auth-service:8000
+      - API_CORE_SERVICE=http://core-service:5000
+
+  # 6. İzleme Servisleri (Prometheus & Grafana)
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - auth-service
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+
+# Disk Alanları (Kalıcı Veriler İçin)
+volumes:
+  auth-service-data:
+  db-data:
+  grafana-data:
